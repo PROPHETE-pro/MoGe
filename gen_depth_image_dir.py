@@ -1,5 +1,8 @@
 import argparse
+import os
 from pathlib import Path
+
+os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
 import cv2
 import numpy as np
@@ -60,13 +63,23 @@ def main():
 
         with torch.inference_mode():
             out = model.infer(x)
-        depth = out["depth"].detach().cpu().numpy().squeeze()
+        depth = out["depth"].detach().cpu().numpy().squeeze().astype(np.float32)
         depth_u8 = normalize_depth_to_uint8(depth)
 
         rel = image_path.relative_to(input_dir)
-        out_path = (output_dir / rel).with_suffix(".png")
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        cv2.imwrite(str(out_path), depth_u8)
+        out_dir = (output_dir / rel).parent
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        stem = Path(rel).stem
+        raw_depth_path = out_dir / f"{stem}.exr"
+        norm_depth_path = out_dir / f"{stem}_norm.png"
+
+        cv2.imwrite(
+            str(raw_depth_path),
+            depth,
+            [cv2.IMWRITE_EXR_TYPE, cv2.IMWRITE_EXR_TYPE_FLOAT],
+        )
+        cv2.imwrite(str(norm_depth_path), depth_u8)
         saved += 1
 
     print(f"完成: 共输出 {saved} 张 depth 图到 {output_dir}")
