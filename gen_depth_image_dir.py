@@ -29,12 +29,6 @@ def normalize_depth_to_uint8(depth: np.ndarray) -> np.ndarray:
     return out.astype(np.uint8)
 
 
-def encode_float32_to_png_rgba(depth: np.ndarray) -> np.ndarray:
-    """将 float32 depth 原样编码为 4 通道 uint8，便于以 .png 后缀保存。"""
-    depth_f32 = np.ascontiguousarray(depth, dtype=np.float32)
-    return depth_f32.view(np.uint8).reshape(depth_f32.shape[0], depth_f32.shape[1], 4)
-
-
 def main():
     parser = argparse.ArgumentParser(description="对 image_dir 中每张图预测 depth")
     parser.add_argument("--input", "-i", required=True, help="输入图片目录 image_dir")
@@ -77,11 +71,10 @@ def main():
         out_dir.mkdir(parents=True, exist_ok=True)
 
         stem = Path(rel).stem
-        raw_depth_path = out_dir / f"{stem}.png"
+        raw_depth_path = out_dir / f"{stem}.npy"
         norm_depth_path = out_dir / f"{stem}_norm.png"
 
-        raw_depth_png = encode_float32_to_png_rgba(depth)
-        cv2.imwrite(str(raw_depth_path), raw_depth_png)
+        np.save(raw_depth_path, depth)
         cv2.imwrite(str(norm_depth_path), depth_u8)
         saved += 1
 
