@@ -24,6 +24,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def main():
+    args = parse_args()
+
     import cv2
     import numpy as np
     import torch
@@ -32,7 +34,6 @@ def main():
     from moge.model import import_model_class_by_version
     from moge.utils.vis import colorize_depth
 
-    args = parse_args()
     input_root = Path(args.image_dir)
     output_root = Path(args.output_dir)
     if not input_root.is_dir():
